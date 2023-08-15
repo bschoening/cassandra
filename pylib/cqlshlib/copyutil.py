@@ -1924,6 +1924,9 @@ class ImportConversion(object):
             else:
                 return BlobType(v[2:].decode("hex"))
 
+        def convert_duration(v, **_):
+            return str(v)
+
         def convert_text(v, **_):
             return str(v)
 
@@ -2101,25 +2104,29 @@ class ImportConversion(object):
 
         converters = {
             'blob': convert_blob,
-            'decimal': get_convert_decimal_fcn(adapter=Decimal),
             'uuid': convert_uuid,
             'boolean': convert_bool,
+
+            'smallint': get_convert_integer_fcn(),
             'tinyint': get_convert_integer_fcn(),
-            'ascii': convert_text,
+            'decimal': get_convert_decimal_fcn(adapter=Decimal),
             'float': get_convert_decimal_fcn(),
             'double': get_convert_decimal_fcn(),
             'bigint': get_convert_integer_fcn(adapter=int),
             'int': get_convert_integer_fcn(),
             'varint': get_convert_integer_fcn(),
-            'inet': convert_text,
             'counter': get_convert_integer_fcn(adapter=int),
-            'timestamp': convert_datetime,
-            'timeuuid': convert_uuid,
-            'date': convert_date,
-            'smallint': get_convert_integer_fcn(),
-            'time': convert_time,
-            'text': convert_text,
+
+            'ascii': convert_text,
+            'inet': convert_text,
             'varchar': convert_text,
+            'text': convert_text,
+
+            'duration' : convert_duration,
+            'timestamp': convert_datetime,
+            'date': convert_date,
+            'time': convert_time,
+            'timeuuid': convert_uuid,
             'list': convert_list,
             'set': convert_set,
             'map': convert_map,
