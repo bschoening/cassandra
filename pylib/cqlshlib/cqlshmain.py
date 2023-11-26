@@ -87,233 +87,24 @@ if webbrowser._tryorder and webbrowser._tryorder[0] == 'xdg-open' and os.environ
 
 warnings.filterwarnings("ignore", r".*blist.*")
 
-DEFAULT_HOST = '127.0.0.1'
-DEFAULT_PORT = 9042
-DEFAULT_SSL = False
-DEFAULT_CONNECT_TIMEOUT_SECONDS = 5
-DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
-
-DEFAULT_FLOAT_PRECISION = 5
-DEFAULT_DOUBLE_PRECISION = 5
-DEFAULT_MAX_TRACE_WAIT = 10
-
-if readline is not None and readline.__doc__ is not None and 'libedit' in readline.__doc__:
-    DEFAULT_COMPLETEKEY = '\t'
-else:
-    DEFAULT_COMPLETEKEY = 'tab'
-
 cqldocs = None
 cqlruleset = None
 CASSANDRA_CQL_HTML = None
 
-epilog = """Connects to %(DEFAULT_HOST)s:%(DEFAULT_PORT)d by default. These
-defaults can be changed by setting $CQLSH_HOST and/or $CQLSH_PORT. When a
-host (and optional port number) are given on the command line, they take
-precedence over any defaults.""" % globals()
-
-
-parser = argparse.ArgumentParser(description=description, epilog=epilog,
-                                 usage="Usage: %(prog)s [options] [host [port]]",
-                                 prog='cqlsh')
-parser.add_argument('-v', '--version', action='version', version='cqlsh ' + version)
-parser.add_argument("-C", "--color", action='store_true', dest='color',
-                                            help='Always use color output')
-parser.add_argument("--no-color", action='store_false', dest='color', help='Never use color output')
-parser.add_argument("--browser", dest='browser', help="""The browser to use to display CQL help, where BROWSER can be:
-                                                    - one of the supported browsers in https://docs.python.org/3/library/webbrowser.html.
-                                                    - browser path followed by %%s, example: /usr/bin/google-chrome-stable %%s""")
-
-parser.add_argument('--ssl', action='store_true', help='Use SSL', default=False)
-parser.add_argument("-u", "--username", help="Authenticate as user.")
-parser.add_argument("-p", "--password", help="Authenticate using password.")
-parser.add_argument('-k', '--keyspace', help='Authenticate to the given keyspace.')
-parser.add_argument("-f", "--file", help="Execute commands from FILE, then exit")
-parser.add_argument('--debug', action='store_true',
-                    help='Show additional debugging information')
-parser.add_argument('--coverage', action='store_true',
-                    help='Collect coverage data')
-parser.add_argument("--encoding", help="Specify a non-default encoding for output."
-                    + " (Default: %s)" % (UTF8,))
-parser.add_argument("--cqlshrc", help="Specify an alternative cqlshrc file location.")
-parser.add_argument("--credentials", help="Specify an alternative credentials file location.")
-parser.add_argument('--cqlversion', default=None,
-                    help='Specify a particular CQL version, '
-                    'by default the highest version supported by the server will be used.'
-                    ' Examples: "3.0.3", "3.1.0"')
-parser.add_argument("--protocol-version", type=int, default=None,
-                    help='Specify a specific protcol version otherwise the client will default and downgrade as necessary')
-
-parser.add_argument("-e", "--execute", help='Execute the statement and quit.')
-parser.add_argument("--connect-timeout", default=DEFAULT_CONNECT_TIMEOUT_SECONDS, dest='connect_timeout',
-                    help='Specify the connection timeout in seconds (default: %(default)s seconds).')
-parser.add_argument("--request-timeout", default=DEFAULT_REQUEST_TIMEOUT_SECONDS, dest='request_timeout',
-                    help='Specify the default request timeout in seconds (default: %(default)s seconds).')
-parser.add_argument("-t", "--tty", action='store_true', dest='tty',
-                    help='Force tty mode (command prompt).')
-
-# This is a hidden option to suppress the warning when the -p/--password command line option is used.
-# Power users may use this option if they know no other people has access to the system where cqlsh is run or don't care about security.
-# Use of this option in scripting is discouraged. Please use a (temporary) credentials file where possible.
-# The Cassandra distributed tests (dtests) also use this option in some tests when a well-known password is supplied via the command line.
-parser.add_argument("--insecure-password-without-warning", action='store_true', dest='insecure_password_without_warning',
-                    help=argparse.SUPPRESS)
-
-# use cfarguments for config file
-
-cfarguments, args = parser.parse_known_args()
-
-# BEGIN history config
-
-
-def mkdirp(path):
-    """Creates all parent directories up to path parameter or fails when path exists, but it is not a directory."""
-
-    try:
-        os.makedirs(path)
-    except OSError:
-        if not os.path.isdir(path):
-            raise
-
-
-def resolve_cql_history_file():
-    default_cql_history = os.path.expanduser(os.path.join('~', '.cassandra', 'cqlsh_history'))
-    if 'CQL_HISTORY' in os.environ:
-        return os.environ['CQL_HISTORY']
-    else:
-        return default_cql_history
-
-
-HISTORY = resolve_cql_history_file()
-HISTORY_DIR = os.path.dirname(HISTORY)
-
-try:
-    mkdirp(HISTORY_DIR)
-except OSError:
-    print('\nWarning: Cannot create directory at `%s`. Command history will not be saved. Please check what was the environment property CQL_HISTORY set to.\n' % HISTORY_DIR)
-
-
-# END history config
-
-DEFAULT_CQLSHRC = os.path.expanduser(os.path.join('~', '.cassandra', 'cqlshrc'))
-
-if cfarguments.cqlshrc is not None:
-    CONFIG_FILE = os.path.expanduser(cfarguments.cqlshrc)
-    if not os.path.exists(CONFIG_FILE):
-        print('\nWarning: Specified cqlshrc location `%s` does not exist.  Using `%s` instead.\n' % (CONFIG_FILE, DEFAULT_CQLSHRC))
-        CONFIG_FILE = DEFAULT_CQLSHRC
-else:
-    CONFIG_FILE = DEFAULT_CQLSHRC
-
-CQL_DIR = os.path.dirname(CONFIG_FILE)
-
-CQL_ERRORS = (
-    cassandra.AlreadyExists, cassandra.AuthenticationFailed, cassandra.CoordinationFailure,
-    cassandra.InvalidRequest, cassandra.Timeout, cassandra.Unauthorized, cassandra.OperationTimedOut,
-    cassandra.cluster.NoHostAvailable,
-    cassandra.connection.ConnectionBusy, cassandra.connection.ProtocolError, cassandra.connection.ConnectionException,
-    cassandra.protocol.ErrorMessage, cassandra.protocol.InternalError, cassandra.query.TraceUnavailable
-)
-
-debug_completion = bool(os.environ.get('CQLSH_DEBUG_COMPLETION', '') == 'YES')
-
-
-class NoKeyspaceError(Exception):
-    pass
-
-
-class KeyspaceNotFound(Exception):
-    pass
-
-
-class ColumnFamilyNotFound(Exception):
-    pass
-
-
-class IndexNotFound(Exception):
-    pass
-
-
-class MaterializedViewNotFound(Exception):
-    pass
-
-
-class ObjectNotFound(Exception):
-    pass
-
-
-class VersionNotSupported(Exception):
-    pass
-
-
-class UserTypeNotFound(Exception):
-    pass
-
-
-class FunctionNotFound(Exception):
-    pass
-
-
-class AggregateNotFound(Exception):
-    pass
-
-
-class DecodeError(Exception):
-    verb = 'decode'
-
-    def __init__(self, thebytes, err, colname=None):
-        self.thebytes = thebytes
-        self.err = err
-        self.colname = colname
-
-    def __str__(self):
-        return str(self.thebytes)
-
-    def message(self):
-        what = 'value %r' % (self.thebytes,)
-        if self.colname is not None:
-            what = 'value %r (for column %r)' % (self.thebytes, self.colname)
-        return 'Failed to %s %s : %s' \
-               % (self.verb, what, self.err)
-
-    def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, self.message())
-
-
-class FormatError(DecodeError):
-    verb = 'format'
-
-
-class SwitchState(Enum):
-    ON = True
-    OFF = False
-
-
-def format_value(val, cqltype, encoding, addcolor=False, date_time_format=None,
-                 float_precision=None, colormap=None, nullval=None):
-    if isinstance(val, DecodeError):
-        if addcolor:
-            return colorme(repr(val.thebytes), colormap, 'error')
-        else:
-            return FormattedValue(repr(val.thebytes))
-    return format_by_type(val, cqltype=cqltype, encoding=encoding, colormap=colormap,
-                          addcolor=addcolor, nullval=nullval, date_time_format=date_time_format,
-                          float_precision=float_precision)
-
-
-def show_warning_without_quoting_line(message, category, filename, lineno, file=None, line=None):
-    if file is None:
-        file = sys.stderr
-    try:
-        file.write(warnings.formatwarning(message, category, filename, lineno, line=''))
-    except IOError:
-        pass
-
-
-warnings.showwarning = show_warning_without_quoting_line
-warnings.filterwarnings('always', category=cql3handling.UnexpectedTableStructure)
-
-
 class Shell(cmd.Cmd):
+    DEFAULT_HOST = '127.0.0.1'
+    DEFAULT_PORT = 9042
+    DEFAULT_CONNECT_TIMEOUT_SECONDS = 5
+    DEFAULT_REQUEST_TIMEOUT_SECONDS = 10
+
+    DEFAULT_FLOAT_PRECISION = 5
+    DEFAULT_MAX_TRACE_WAIT = 10
+
+    if readline is not None and readline.__doc__ is not None and 'libedit' in readline.__doc__:
+        DEFAULT_COMPLETEKEY = '\t'
+    else:
+        DEFAULT_COMPLETEKEY = 'tab'
+
     custom_prompt = os.getenv('CQLSH_PROMPT', '')
     if custom_prompt != '':
         custom_prompt += "\n"
@@ -332,7 +123,7 @@ class Shell(cmd.Cmd):
 
     default_page_size = 100
 
-    def __init__(self, hostname, port, color=False,
+    def __init__(self, hostname=DEFAULT_HOST, port=DEFAULT_PORT, color=False,
                  username=None, encoding=None, elapsed_enabled=False, stdin=None, tty=True,
                  completekey=DEFAULT_COMPLETEKEY, browser=None, use_conn=None,
                  cqlver=None, keyspace=None,
@@ -341,7 +132,7 @@ class Shell(cmd.Cmd):
                  display_timestamp_format=DEFAULT_TIMESTAMP_FORMAT,
                  display_date_format=DEFAULT_DATE_FORMAT,
                  display_float_precision=DEFAULT_FLOAT_PRECISION,
-                 display_double_precision=DEFAULT_DOUBLE_PRECISION,
+                 display_double_precision=DEFAULT_FLOAT_PRECISION,
                  display_timezone=None,
                  max_trace_wait=DEFAULT_MAX_TRACE_WAIT,
                  ssl=False,
@@ -2026,6 +1817,209 @@ class Shell(cmd.Cmd):
             return True, int(value)
         return Shell.on_off_switch(name, current, value), None
 
+epilog = f"Connects to {Shell.DEFAULT_HOST}:{Shell.DEFAULT_PORT} by default. These defaults can be \
+changed by setting $CQLSH_HOST and/or $CQLSH_PORT. When a host (and optional port number) are given \
+on the command line, they take precedence over any defaults."
+
+parser = argparse.ArgumentParser(description=description, epilog=epilog,
+                                 usage="Usage: %(prog)s [options] [host [port]]",
+                                 prog='cqlsh')
+parser.add_argument('-v', '--version', action='version', version='cqlsh ' + version)
+parser.add_argument("-C", "--color", action='store_true', dest='color',
+                                            help='Always use color output')
+parser.add_argument("--no-color", action='store_false', dest='color', help='Never use color output')
+parser.add_argument("--browser", dest='browser', help="""The browser to use to display CQL help, where BROWSER can be:
+                                                    - one of the supported browsers in https://docs.python.org/3/library/webbrowser.html.
+                                                    - browser path followed by %%s, example: /usr/bin/google-chrome-stable %%s""")
+
+parser.add_argument('--ssl', action='store_true', help='Use SSL', default=False)
+parser.add_argument("-u", "--username", help="Authenticate as user.")
+parser.add_argument("-p", "--password", help="Authenticate using password.")
+parser.add_argument('-k', '--keyspace', help='Authenticate to the given keyspace.')
+parser.add_argument("-f", "--file", help="Execute commands from FILE, then exit")
+parser.add_argument('--debug', action='store_true',
+                    help='Show additional debugging information')
+parser.add_argument('--coverage', action='store_true',
+                    help='Collect coverage data')
+parser.add_argument("--encoding", help="Specify a non-default encoding for output."
+                    + " (Default: %s)" % (UTF8,))
+parser.add_argument("--cqlshrc", help="Specify an alternative cqlshrc file location.")
+parser.add_argument("--credentials", help="Specify an alternative credentials file location.")
+parser.add_argument('--cqlversion', default=None,
+                    help='Specify a particular CQL version, '
+                    'by default the highest version supported by the server will be used.'
+                    ' Examples: "3.0.3", "3.1.0"')
+parser.add_argument("--protocol-version", type=int, default=None,
+                    help='Specify a specific protcol version otherwise the client will default and downgrade as necessary')
+
+parser.add_argument("-e", "--execute", help='Execute the statement and quit.')
+parser.add_argument("--connect-timeout", dest='connect_timeout',
+                    help='Specify the connection timeout in seconds (default: %(default)s seconds).')
+parser.add_argument("--request-timeout", default=None, dest='request_timeout',
+                    help='Specify the default request timeout in seconds (default: %(default)s seconds).')
+parser.add_argument("-t", "--tty", action='store_true', dest='tty',
+                    help='Force tty mode (command prompt).')
+
+# This is a hidden option to suppress the warning when the -p/--password command line option is used.
+# Power users may use this option if they know no other people has access to the system where cqlsh is run or don't care about security.
+# Use of this option in scripting is discouraged. Please use a (temporary) credentials file where possible.
+# The Cassandra distributed tests (dtests) also use this option in some tests when a well-known password is supplied via the command line.
+parser.add_argument("--insecure-password-without-warning", action='store_true', dest='insecure_password_without_warning',
+                    help=argparse.SUPPRESS)
+
+# use cfarguments for config file
+
+cfarguments, args = parser.parse_known_args()
+
+# BEGIN history config
+
+
+def mkdirp(path):
+    """Creates all parent directories up to path parameter or fails when path exists, but it is not a directory."""
+
+    try:
+        os.makedirs(path)
+    except OSError:
+        if not os.path.isdir(path):
+            raise
+
+
+def resolve_cql_history_file():
+    default_cql_history = os.path.expanduser(os.path.join('~', '.cassandra', 'cqlsh_history'))
+    if 'CQL_HISTORY' in os.environ:
+        return os.environ['CQL_HISTORY']
+    else:
+        return default_cql_history
+
+
+HISTORY = resolve_cql_history_file()
+HISTORY_DIR = os.path.dirname(HISTORY)
+
+try:
+    mkdirp(HISTORY_DIR)
+except OSError:
+    print('\nWarning: Cannot create directory at `%s`. Command history will not be saved. Please check what was the environment property CQL_HISTORY set to.\n' % HISTORY_DIR)
+
+
+# END history config
+
+DEFAULT_CQLSHRC = os.path.expanduser(os.path.join('~', '.cassandra', 'cqlshrc'))
+
+if cfarguments.cqlshrc is not None:
+    CONFIG_FILE = os.path.expanduser(cfarguments.cqlshrc)
+    if not os.path.exists(CONFIG_FILE):
+        print('\nWarning: Specified cqlshrc location `%s` does not exist.  Using `%s` instead.\n' % (CONFIG_FILE, DEFAULT_CQLSHRC))
+        CONFIG_FILE = DEFAULT_CQLSHRC
+else:
+    CONFIG_FILE = DEFAULT_CQLSHRC
+
+CQL_DIR = os.path.dirname(CONFIG_FILE)
+
+CQL_ERRORS = (
+    cassandra.AlreadyExists, cassandra.AuthenticationFailed, cassandra.CoordinationFailure,
+    cassandra.InvalidRequest, cassandra.Timeout, cassandra.Unauthorized, cassandra.OperationTimedOut,
+    cassandra.cluster.NoHostAvailable,
+    cassandra.connection.ConnectionBusy, cassandra.connection.ProtocolError, cassandra.connection.ConnectionException,
+    cassandra.protocol.ErrorMessage, cassandra.protocol.InternalError, cassandra.query.TraceUnavailable
+)
+
+debug_completion = bool(os.environ.get('CQLSH_DEBUG_COMPLETION', '') == 'YES')
+
+
+class NoKeyspaceError(Exception):
+    pass
+
+
+class KeyspaceNotFound(Exception):
+    pass
+
+
+class ColumnFamilyNotFound(Exception):
+    pass
+
+
+class IndexNotFound(Exception):
+    pass
+
+
+class MaterializedViewNotFound(Exception):
+    pass
+
+
+class ObjectNotFound(Exception):
+    pass
+
+
+class VersionNotSupported(Exception):
+    pass
+
+
+class UserTypeNotFound(Exception):
+    pass
+
+
+class FunctionNotFound(Exception):
+    pass
+
+
+class AggregateNotFound(Exception):
+    pass
+
+
+class DecodeError(Exception):
+    verb = 'decode'
+
+    def __init__(self, thebytes, err, colname=None):
+        self.thebytes = thebytes
+        self.err = err
+        self.colname = colname
+
+    def __str__(self):
+        return str(self.thebytes)
+
+    def message(self):
+        what = 'value %r' % (self.thebytes,)
+        if self.colname is not None:
+            what = 'value %r (for column %r)' % (self.thebytes, self.colname)
+        return 'Failed to %s %s : %s' \
+               % (self.verb, what, self.err)
+
+    def __repr__(self):
+        return '<%s %s>' % (self.__class__.__name__, self.message())
+
+
+class FormatError(DecodeError):
+    verb = 'format'
+
+
+class SwitchState(Enum):
+    ON = True
+    OFF = False
+
+
+def format_value(val, cqltype, encoding, addcolor=False, date_time_format=None,
+                 float_precision=None, colormap=None, nullval=None):
+    if isinstance(val, DecodeError):
+        if addcolor:
+            return colorme(repr(val.thebytes), colormap, 'error')
+        else:
+            return FormattedValue(repr(val.thebytes))
+    return format_by_type(val, cqltype=cqltype, encoding=encoding, colormap=colormap,
+                          addcolor=addcolor, nullval=nullval, date_time_format=date_time_format,
+                          float_precision=float_precision)
+
+
+def show_warning_without_quoting_line(message, category, filename, lineno, file=None, line=None):
+    if file is None:
+        file = sys.stderr
+    try:
+        file.write(warnings.formatwarning(message, category, filename, lineno, line=''))
+    except IOError:
+        pass
+
+
+warnings.showwarning = show_warning_without_quoting_line
+warnings.filterwarnings('always', category=cql3handling.UnexpectedTableStructure)
 
 def option_with_default(cparser_getter, section, option, default=None):
     try:
@@ -2085,8 +2079,7 @@ def read_options(cmdlineargs, environment=os.environ):
                                                                    os.path.join(CQL_DIR, 'credentials')))
     argvalues.keyspace = option_with_default(configs.get, 'authentication', 'keyspace')
     argvalues.browser = option_with_default(configs.get, 'ui', 'browser', None)
-    argvalues.completekey = option_with_default(configs.get, 'ui', 'completekey',
-                                                DEFAULT_COMPLETEKEY)
+    argvalues.completekey = option_with_default(configs.get, 'ui', 'completekey', None)
     argvalues.color = option_with_default(configs.getboolean, 'ui', 'color')
     argvalues.time_format = raw_option_with_default(configs, 'ui', 'time_format',
                                                     DEFAULT_TIMESTAMP_FORMAT)
@@ -2094,12 +2087,9 @@ def read_options(cmdlineargs, environment=os.environ):
                                                         DEFAULT_NANOTIME_FORMAT)
     argvalues.date_format = raw_option_with_default(configs, 'ui', 'date_format',
                                                     DEFAULT_DATE_FORMAT)
-    argvalues.float_precision = option_with_default(configs.getint, 'ui', 'float_precision',
-                                                    DEFAULT_FLOAT_PRECISION)
-    argvalues.double_precision = option_with_default(configs.getint, 'ui', 'double_precision',
-                                                     DEFAULT_DOUBLE_PRECISION)
-    argvalues.max_trace_wait = option_with_default(configs.getfloat, 'tracing', 'max_trace_wait',
-                                                   DEFAULT_MAX_TRACE_WAIT)
+    argvalues.float_precision = option_with_default(configs.getint, 'ui', 'float_precision', None)
+    argvalues.double_precision = option_with_default(configs.getint, 'ui', 'double_precision', None)
+    argvalues.max_trace_wait = option_with_default(configs.getfloat, 'tracing', 'max_trace_wait', None)
     argvalues.timezone = option_with_default(configs.get, 'ui', 'timezone', None)
 
     argvalues.debug = False
@@ -2109,7 +2099,7 @@ def read_options(cmdlineargs, environment=os.environ):
         argvalues.coverage = True
 
     argvalues.file = None
-    argvalues.ssl = option_with_default(configs.getboolean, 'connection', 'ssl', DEFAULT_SSL)
+    argvalues.ssl = option_with_default(configs.getboolean, 'connection', 'ssl', None)
     argvalues.encoding = option_with_default(configs.get, 'ui', 'encoding', UTF8)
 
     argvalues.tty = option_with_default(configs.getboolean, 'ui', 'tty', sys.stdin.isatty())
@@ -2173,14 +2163,13 @@ def read_options(cmdlineargs, environment=os.environ):
         options.connect_timeout = int(options.connect_timeout)
     except ValueError:
         parser.error('"%s" is not a valid connect timeout.' % (options.connect_timeout,))
-        options.connect_timeout = DEFAULT_CONNECT_TIMEOUT_SECONDS
+        options.connect_timeout = None
 
     try:
         options.request_timeout = int(options.request_timeout)
     except ValueError:
         parser.error('"%s" is not a valid request timeout.' % (options.request_timeout,))
-        options.request_timeout = DEFAULT_REQUEST_TIMEOUT_SECONDS
-
+        options.request_timeout = None
     if len(arguments) > 0:
         hostname = arguments[0]
     if len(arguments) > 1:
