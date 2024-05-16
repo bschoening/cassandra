@@ -216,6 +216,9 @@ JUNK ::= /([ \t\r\f\v]+|(--|[/][/])[^\n\r]*([\n\r]|$)|[/][*].*?[*][/])/ ;
          ;
 
 <functionLiteral> ::= (<identifier> ( "." <identifier> )?)
+                 | "maxTimeuuid"
+                 | "minTimeuuid"
+                 | "NOW"
                  | "TOKEN"
                  ;
 
@@ -752,9 +755,18 @@ syntax_rules += r'''
 <selector> ::= [colname]=<cident> ( "[" ( <term> ( ".." <term> "]" )? | <term> ".." ) )?
              | <udtSubfieldSelection>
              | "WRITETIME" "(" [colname]=<cident> ")"
+             | "DATEOF" "(" [colname]=<cident> ")"
              | "MAXWRITETIME" "(" [colname]=<cident> ")"
              | "TTL" "(" [colname]=<cident> ")"
+             | "AVG" "(" [colname]=<cident> ")"
              | "COUNT" "(" star=( "*" | "1" ) ")"
+             | "MAX" "(" [colname]=<cident> ")"
+             | "MIN" "(" [colname]=<cident> ")"
+             | "SUM" "(" [colname]=<cident> ")"
+             | "TODATE" "(" [colname]=<cident> ")"
+             | "TOTIMESTAMP" "(" [colname]=<cident> ")"
+             | "TOUNIXTIMESTAMP" "(" [colname]=<cident> ")"
+             | "UNIXTIMESTAMPOF" "(" [colname]=<cident> ")"
              | "CAST" "(" <selector> "AS" <storageType> ")"
              | <functionName> <selectionFunctionArguments>
              | <term>
