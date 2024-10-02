@@ -114,7 +114,8 @@ class CqlshCompletionCase(BaseTestCase):
 
     def _trycompletions_inner(self, inputstring, immediate='', choices=(),
                               other_choices_ok=False,
-                              split_completed_lines=True):
+                              split_completed_lines=True,
+                              ignore_system_keyspaces=False):
         """
         Test tab completion in cqlsh. Enters in the text in inputstring, then
         simulates a tab keypress to see what is immediately completed (this
@@ -132,17 +133,22 @@ class CqlshCompletionCase(BaseTestCase):
             self.assertEqual(completed, immediate, msg=msg)
             return
 
+        if ignore_system_keyspaces:
+            completed = list(filter(lambda s: not s.startswith('system'), completed))
+
         if other_choices_ok:
             self.assertEqual(set(choices), completed.intersection(choices))
         else:
             self.assertEqual(set(choices), set(completed))
 
     def trycompletions(self, inputstring, immediate='', choices=(),
-                       other_choices_ok=False, split_completed_lines=True):
+                       other_choices_ok=False, split_completed_lines=True,
+                        ignore_system_keyspaces=False):
         try:
             self._trycompletions_inner(inputstring, immediate, choices,
                                        other_choices_ok=other_choices_ok,
-                                       split_completed_lines=split_completed_lines)
+                                       split_completed_lines=split_completed_lines,
+                                       ignore_system_keyspaces=ignore_system_keyspaces)
         finally:
             try:
                 self.cqlsh.send(CTRL_C)  # cancel any current line
@@ -174,8 +180,28 @@ class TestCqlshCompletion(CqlshCompletionCase):
     def test_complete_in_uuid(self):
         pass
 
-    def test_complete_in_select(self):
-        pass
+    def test_complete__in_select(self):
+        self.trycompletions('SELECT ',
+                            choices=('*', '-',
+                                     '<blobLiteral>', '<colname>', '<float>',
+                                     '<identifier>', '<pgStringLiteral>',
+                                     '<quotedStringLiteral>', '<uuid>',
+                                     '<wholenumber>',
+                                     'ABS', 'AVG', 'CAST', 'COUNT', 'DISTINCT',
+                                     'EXP', 'JSON', 'LOG', 'LOG10',
+                                     'MAP_KEYS', 'MAP_VALUES',
+                                     'MAX', 'MAX_TIMEUUID', 'MIN_TIMEUUID',
+                                     'MIN', 'MIN_TIMEUUID', 'MIN_TIMEUUID',
+                                     'MAX_WRITETIME', 'MIN_WRITETIME',
+                                     'NULL', 'ROUND', 'SUM', 'TOKEN',
+                                     'TO_DATE', 'TO_TIMESTAMP', 'TO_UNIX_TIMESTAMP',
+                                     'TTL', 'WRITETIME',
+                                     '[', 'false', 'true', '{'
+                                     ),
+                            ignore_system_keyspaces=True
+                            )
+
+
 
     def test_complete_in_insert(self):
         self.trycompletions('INSERT INTO  ',
@@ -376,7 +402,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs'",
                             choices=[',', 'WHERE'])
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE ",
-                            choices=['TOKEN(', 'minTimeuuid()', 'maxTimeuuid()', 'lonelykey'])
+                            choices=['TOKEN(', 'MIN_TIMEUUID()', 'MAX_TIMEUUID()', 'lonelykey'])
 
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE lonel",
                             immediate='ykey ')
@@ -385,7 +411,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE lonelykey = 0.0 ",
                             choices=['AND', 'IF', ';'])
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE lonelykey = 0.0 AND ",
-                            choices=['TOKEN(', 'minTimeuuid()', 'maxTimeuuid()', 'lonelykey'])
+                            choices=['TOKEN(', 'MIN_TIMEUUID()', 'MAX_TIMEUUID()', 'lonelykey'])
 
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE TOKEN(lonelykey ",
                             choices=[',', ')'])
@@ -461,7 +487,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 ',
                             immediate='WHERE ')
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 WHERE ',
-                            choices=['a', 'b', 'maxTimeuuid()', 'minTimeuuid()', 'TOKEN('])
+                            choices=['a', 'b', 'MAX_TIMEUUID()', 'MIN_TIMEUUID()', 'TOKEN('])
 
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 WHERE a ',
                             choices=['<=', '>=', 'BETWEEN', 'CONTAINS', 'IN', 'NOT' , '[', '=', '<', '>', '!='])

@@ -747,8 +747,8 @@ syntax_rules += r'''
                              ")" ("=" | "<" | ">" | "<=" | ">=") <tokenDefinition>
              | [rel_lhs]=<cident> (( "NOT" )? "IN" ) "(" <term> ( "," <term> )* ")"
              | [rel_lhs]=<cident> "BETWEEN" <term> "AND" <term>
-             | "maxTimeuuid()" "(" [colname]=<cident> ")"
-             | "minTimeuuid()" "(" [colname]=<cident> ")"
+             | "MAX_TIMEUUID()" "(" [colname]=<cident> ")"
+             | "MIN_TIMEUUID()" "(" [colname]=<cident> ")"
              ;
 <selectClause> ::= "DISTINCT"? <selector> ("AS" <cident>)? ("," <selector> ("AS" <cident>)?)*
                  | "*"
@@ -758,7 +758,8 @@ syntax_rules += r'''
 <selector> ::= [colname]=<cident> ( "[" ( <term> ( ".." <term> "]" )? | <term> ".." ) )?
              | <udtSubfieldSelection>
              | "WRITETIME" "(" [colname]=<cident> ")"
-             | "MAXWRITETIME" "(" [colname]=<cident> ")"
+             | "MAX_WRITETIME" "(" [colname]=<cident> ")"
+             | "MIN_WRITETIME" "(" [colname]=<cident> ")"
              | "TTL" "(" [colname]=<cident> ")"
              | "COUNT" "(" star=( "*" | "1" ) ")"
              | "AVG" "(" star=( "*" | "1" ) ")"
@@ -770,15 +771,14 @@ syntax_rules += r'''
              | "LOG" "(" star=( "*" | "1" ) ")"
              | "LOG10" "(" star=( "*" | "1" ) ")"
              | "ROUND" "(" [colname]=<cident> ")"
-             | "TODATE" "(" [colname]=<cident> ")"
-             | "TOTIMESTAMP" "(" [colname]=<cident> ")"
-             | "TOUNIXTIMESTAMP" "(" [colname]=<cident> ")"
+             | "TO_DATE" "(" [colname]=<cident> ")"
+             | "TO_TIMESTAMP" "(" [colname]=<cident> ")"
+             | "TO_UNIX_TIMESTAMP" "(" [colname]=<cident> ")"
              | "TOKEN" "(" [colname]=<cident> ")"
-             | "TODATE" "(" [colname]=<cident> ")"
              | "MAP_KEYS" "(" [colname]=<cident> ")"
              | "MAP_VALUES" "(" [colname]=<cident> ")"
-             | "MINTIMEUUID" "(" [colname]=<cident> ")"
-             | "MAXTIMEUUID" "(" [colname]=<cident> ")"
+             | "MIN_TIMEUUID" "(" [colname]=<cident> ")"
+             | "MAX_TIMEUUID" "(" [colname]=<cident> ")"
              | "CAST" "(" <selector> "AS" <storageType> ")"
              | <functionName> <selectionFunctionArguments>
              | <term>
