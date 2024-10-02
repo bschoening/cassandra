@@ -180,7 +180,8 @@ class TestCqlshCompletion(CqlshCompletionCase):
     def test_complete_in_uuid(self):
         pass
 
-    def test_complete__in_select(self):
+    # for pytest ordering, use zero in test name to precede create keyspace and functions
+    def test_complete_0_in_select(self):
         self.trycompletions('SELECT ',
                             choices=('*', '-',
                                      '<blobLiteral>', '<colname>', '<float>',
@@ -196,12 +197,14 @@ class TestCqlshCompletion(CqlshCompletionCase):
                                      'NULL', 'ROUND', 'SUM', 'TOKEN',
                                      'TO_DATE', 'TO_TIMESTAMP', 'TO_UNIX_TIMESTAMP',
                                      'TTL', 'WRITETIME',
+                                     'COLLECTION_AVG', 'COLLECTION_COUNT', 'COLLECTION_MAX',
+                                     'COLLECTION_MIN', 'COLLECTION_SUM',
+                                     'MASK_DEFAULT', 'MASK_INNER', 'MASK_NULL',
+                                     'MASK_OUTER', 'MASK_REPLACE',
                                      '[', 'false', 'true', '{'
                                      ),
                             ignore_system_keyspaces=True
                             )
-
-
 
     def test_complete_in_insert(self):
         self.trycompletions('INSERT INTO  ',

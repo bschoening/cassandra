@@ -780,6 +780,17 @@ syntax_rules += r'''
              | "MIN_TIMEUUID" "(" [colname]=<cident> ")"
              | "MAX_TIMEUUID" "(" [colname]=<cident> ")"
              | "CAST" "(" <selector> "AS" <storageType> ")"
+             | "COLLECTION_AVG" "(" [colname]=<cident> ")"
+             | "COLLECTION_COUNT" "(" [colname]=<cident> ")"
+             | "COLLECTION_MIN" "(" [colname]=<cident> ")"
+             | "COLLECTION_MAX" "(" [colname]=<cident> ")"
+             | "COLLECTION_SUM" "(" [colname]=<cident> ")"
+             | "MASK_NULL" "(" [colname]=<cident> ")"
+             | "MASK_DEFAULT" "(" [colname]=<cident> ")"
+             | "MASK_REPLACE" "(" [colname]=<cident> "," <term> ")"
+             | "MASK_HASH" "(" [colname]=<cident> ")"
+             | "MASK_INNER" "(" [colname]=<cident> ")"
+             | "MASK_OUTER" "(" [colname]=<cident> ")"
              | <functionName> <selectionFunctionArguments>
              | <term>
              ;
