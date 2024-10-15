@@ -143,7 +143,7 @@ class CqlshCompletionCase(BaseTestCase):
 
     def trycompletions(self, inputstring, immediate='', choices=(),
                        other_choices_ok=False, split_completed_lines=True,
-                        ignore_system_keyspaces=False):
+                       ignore_system_keyspaces=False):
         try:
             self._trycompletions_inner(inputstring, immediate, choices,
                                        other_choices_ok=other_choices_ok,
@@ -180,30 +180,41 @@ class TestCqlshCompletion(CqlshCompletionCase):
     def test_complete_in_uuid(self):
         pass
 
-    # for pytest ordering, use zero in test name to precede create keyspace and functions
-    def test_complete_0_in_select(self):
+    def test_complete_in_select(self):
         self.trycompletions('SELECT ',
-                            choices=('*', '-',
-                                     '<blobLiteral>', '<colname>', '<float>',
-                                     '<identifier>', '<pgStringLiteral>',
-                                     '<quotedStringLiteral>', '<uuid>',
-                                     '<wholenumber>',
+                            choices=('*', '<colname>',
+                                     '-', '<blobLiteral>', '<float>', '<wholenumber>', '<uuid>',
+                                     '<identifier>', '<pgStringLiteral>', '<quotedStringLiteral>',
                                      'ABS', 'AVG', 'CAST', 'COUNT', 'DISTINCT',
                                      'EXP', 'JSON', 'LOG', 'LOG10',
                                      'MAP_KEYS', 'MAP_VALUES',
                                      'MAX', 'MAX_TIMEUUID', 'MIN_TIMEUUID',
                                      'MIN', 'MIN_TIMEUUID', 'MIN_TIMEUUID',
                                      'MAX_WRITETIME', 'MIN_WRITETIME',
-                                     'NULL', 'ROUND', 'SUM', 'TOKEN',
+                                     'ROUND', 'SUM', 'TOKEN',
                                      'TO_DATE', 'TO_TIMESTAMP', 'TO_UNIX_TIMESTAMP',
                                      'TTL', 'WRITETIME',
                                      'COLLECTION_AVG', 'COLLECTION_COUNT', 'COLLECTION_MAX',
                                      'COLLECTION_MIN', 'COLLECTION_SUM',
-                                     'MASK_DEFAULT', 'MASK_INNER', 'MASK_NULL',
+                                     'MASK_DEFAULT', 'MASK_HASH', 'MASK_INNER', 'MASK_NULL',
                                      'MASK_OUTER', 'MASK_REPLACE',
-                                     '[', 'false', 'true', '{'
+                                     '[', '{', 'false', 'true', 'NULL'
                                      ),
-                            ignore_system_keyspaces=True
+                            other_choices_ok=True
+                            )
+
+    def test_complete_in_select_where(self):
+        self.trycompletions('SELECT * FROM system.peers WHERE ',
+                            choices=('<identifier>', '<quotedName>', 'peer', 'TOKEN', 'MAX_TIMEUUID', 'MIN_TIMEUUID')
+                            )
+
+    def test_complete_in_select_where_equal(self):
+        self.trycompletions('SELECT * FROM system.peers WHERE rack = ',
+                            choices=('-', '<blobLiteral>', '<float>', '<wholenumber>', '<uuid>',
+                                     '<identifier>', '<pgStringLiteral>', '<quotedStringLiteral>',
+                                     '[', '{', 'false', 'true', 'NULL',
+                                     'TOKEN'
+                                     )
                             )
 
     def test_complete_in_insert(self):
@@ -405,7 +416,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs'",
                             choices=[',', 'WHERE'])
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE ",
-                            choices=['TOKEN(', 'MIN_TIMEUUID()', 'MAX_TIMEUUID()', 'lonelykey'])
+                            choices=['TOKEN', 'MIN_TIMEUUID', 'MAX_TIMEUUID', 'lonelykey'])
 
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE lonel",
                             immediate='ykey ')
@@ -414,7 +425,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE lonelykey = 0.0 ",
                             choices=['AND', 'IF', ';'])
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE lonelykey = 0.0 AND ",
-                            choices=['TOKEN(', 'MIN_TIMEUUID()', 'MAX_TIMEUUID()', 'lonelykey'])
+                            choices=['TOKEN', 'MIN_TIMEUUID', 'MAX_TIMEUUID', 'lonelykey'])
 
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE TOKEN(lonelykey ",
                             choices=[',', ')'])
@@ -426,7 +437,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
                             choices=['EXISTS', '<quotedName>', '<identifier>'])
 
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE TOKEN(lonelykey) <= TOKEN(13) IF EXISTS ",
-                            choices=['>=', '!=', '<=', 'IN','[', ';', '=', '<', '>', '.', 'CONTAINS'])
+                            choices=['>=', '!=', '<=', 'IN', '[', ';', '=', '<', '>', '.', 'CONTAINS'])
 
         self.trycompletions("UPDATE empty_table SET lonelycol = 'eggs' WHERE TOKEN(lonelykey) <= TOKEN(13) IF lonelykey ",
                             choices=['>=', '!=', '<=', 'IN', '=', '<', '>', 'CONTAINS'])
@@ -490,10 +501,10 @@ class TestCqlshCompletion(CqlshCompletionCase):
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 ',
                             immediate='WHERE ')
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 WHERE ',
-                            choices=['a', 'b', 'MAX_TIMEUUID()', 'MIN_TIMEUUID()', 'TOKEN('])
+                            choices=['a', 'b', 'MAX_TIMEUUID', 'MIN_TIMEUUID', 'TOKEN'])
 
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 WHERE a ',
-                            choices=['<=', '>=', 'BETWEEN', 'CONTAINS', 'IN', 'NOT' , '[', '=', '<', '>', '!='])
+                            choices=['<=', '>=', 'BETWEEN', 'CONTAINS', 'IN', 'NOT', '[', '=', '<', '>', '!='])
 
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 WHERE TOKEN(',
                             immediate='a ')
@@ -505,7 +516,7 @@ class TestCqlshCompletion(CqlshCompletionCase):
                             choices=['>=', '<=', '=', '<', '>'])
         self.trycompletions('DELETE FROM twenty_rows_composite_table USING TIMESTAMP 0 WHERE TOKEN(a) >= ',
                             choices=['false', 'true', '<pgStringLiteral>',
-                                     'token(', '-', '<float>', 'TOKEN',
+                                     '-', '<float>', 'TOKEN',
                                      '<identifier>', '<uuid>', '{', '[', 'NULL',
                                      '<quotedStringLiteral>', '<blobLiteral>',
                                      '<wholenumber>'])

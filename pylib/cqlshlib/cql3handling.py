@@ -602,7 +602,7 @@ def cf_prop_val_mapender_completer(ctxt, cass):
 
 @completer_for('tokenDefinition', 'token')
 def token_word_completer(ctxt, cass):
-    return ['token(']
+    return ['TOKEN']
 
 
 @completer_for('simpleStorageType', 'typename')
@@ -747,8 +747,8 @@ syntax_rules += r'''
                              ")" ("=" | "<" | ">" | "<=" | ">=") <tokenDefinition>
              | [rel_lhs]=<cident> (( "NOT" )? "IN" ) "(" <term> ( "," <term> )* ")"
              | [rel_lhs]=<cident> "BETWEEN" <term> "AND" <term>
-             | "MAX_TIMEUUID()" "(" [colname]=<cident> ")"
-             | "MIN_TIMEUUID()" "(" [colname]=<cident> ")"
+             | "MAX_TIMEUUID" "(" [colname]=<cident> ")"
+             | "MIN_TIMEUUID" "(" [colname]=<cident> ")"
              ;
 <selectClause> ::= "DISTINCT"? <selector> ("AS" <cident>)? ("," <selector> ("AS" <cident>)?)*
                  | "*"
@@ -761,16 +761,8 @@ syntax_rules += r'''
              | "MAX_WRITETIME" "(" [colname]=<cident> ")"
              | "MIN_WRITETIME" "(" [colname]=<cident> ")"
              | "TTL" "(" [colname]=<cident> ")"
-             | "COUNT" "(" star=( "*" | "1" ) ")"
-             | "AVG" "(" star=( "*" | "1" ) ")"
-             | "MIN" "(" star=( "*" | "1" ) ")"
-             | "MAX" "(" star=( "*" | "1" ) ")"
-             | "SUM" "(" star=( "*" | "1" ) ")"
-             | "ABS" "(" star=( "*" | "1" ) ")"
-             | "EXP" "(" star=( "*" | "1" ) ")"
-             | "LOG" "(" star=( "*" | "1" ) ")"
-             | "LOG10" "(" star=( "*" | "1" ) ")"
-             | "ROUND" "(" [colname]=<cident> ")"
+             | <aggregateMathFunction>
+             | <scalarMathFunction>
              | "TO_DATE" "(" [colname]=<cident> ")"
              | "TO_TIMESTAMP" "(" [colname]=<cident> ")"
              | "TO_UNIX_TIMESTAMP" "(" [colname]=<cident> ")"
@@ -807,6 +799,21 @@ syntax_rules += r'''
 <groupByFunctionArgument> ::= [groupcol]=<cident>
                             | <term>
                             ;
+
+<aggregateMathFunction> ::= "COUNT" "(" star=( "*" | "1" ) ")"
+             | "AVG" "(" star=( "*" | "1" ) ")"
+             | "MIN" "(" star=( "*" | "1" ) ")"
+             | "MAX" "(" star=( "*" | "1" ) ")"
+             | "SUM" "(" star=( "*" | "1" ) ")"
+             ;
+
+<scalarMathFunction> ::= "ABS" "(" [colname]=<cident> ")"
+             | "EXP" "(" [colname]=<cident> ")"
+             | "LOG" "(" [colname]=<cident> ")"
+             | "LOG10" "(" [colname]=<cident> ")"
+             | "ROUND" "(" [colname]=<cident> ")"
+             ;
+
 '''
 
 
@@ -899,7 +906,7 @@ def select_group_column_completer(ctxt, cass):
 
 @completer_for('relation', 'token')
 def relation_token_word_completer(ctxt, cass):
-    return ['TOKEN(']
+    return ['TOKEN']
 
 
 @completer_for('relation', 'rel_tokname')
