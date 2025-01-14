@@ -45,7 +45,7 @@ though the provided grammar in this document suggest it is not
 supported.
 * Sample code will be provided in a code block:
 
-[source,bnf]
+[source,sql]
 SELECT sample_usage FROM cql;
 
 * References to keywords or pieces of CQL code in running text will be
@@ -148,12 +148,12 @@ and should generally be preferred.
 A comment in CQL is a line beginning by either double dashes (`--`) or
 double slash (`//`).
 
-Multi-line comments are also supported through enclosure within `/*` and
-`*/` (but nesting is not supported).
+Multi-line comments are also supported through enclosure within `$$/*$$` and
+`$$*/$$` (but nesting is not supported).
 
-[source,bnf]
+[source,sql]
 ----
-— This is a comment
+-- This is a comment
 // This is a comment too
 /* This is
 a multi-line comment */
@@ -245,8 +245,11 @@ code fragments for user-defined functions.
 
 _Sample:_
 
-[source,bnf]
-`some string value'
+[source]
+----
+'some string value'
+$$A King's ransom$$
+----
 
 $$double-dollar string can contain single ’ quotes$$
 
@@ -283,15 +286,15 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE KEYSPACE Excelsior
-WITH replication = \{’class’: `SimpleStrategy', `replication_factor' :
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor' :
 3};
 
 CREATE KEYSPACE Excalibur
-WITH replication = \{’class’: `NetworkTopologyStrategy', `DC1' : 1,
-`DC2' : 3}
+WITH replication = {'class': `NetworkTopologyStrategy', 'DC1' : 1,
+'DC2' : 3}
 AND durable_writes = false;
 ----
 
@@ -343,8 +346,8 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
- USE myApp;
+[source,sql]
+USE myApp;
 
 The `USE` statement takes an existing keyspace name as argument and set
 it as the per-connection current working keyspace. All subsequent
@@ -362,9 +365,9 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ALTER KEYSPACE Excelsior
-WITH replication = \{’class’: `SimpleStrategy', `replication_factor' :
+WITH replication = {'class': `SimpleStrategy', `replication_factor' :
 4};
 
 The `ALTER KEYSPACE` statement alters the properties of an existing
@@ -381,7 +384,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
  DROP KEYSPACE myApp;
 
 A `DROP KEYSPACE` statement results in the immediate, irreversible
@@ -415,14 +418,14 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE monkeySpecies (
 species text PRIMARY KEY,
 common_name text,
 population varint,
 average_size int
-) WITH comment=`Important biological records';
+) WITH comment='Important biological records';
 
 CREATE TABLE timeline (
 userid uuid,
@@ -431,7 +434,7 @@ posted_time uuid,
 body text,
 posted_by text,
 PRIMARY KEY (userid, posted_month, posted_time)
-) WITH compaction = \{ `class' : `LeveledCompactionStrategy' };
+) WITH compaction = { 'class' : 'LeveledCompactionStrategy' };
 ----
 The `CREATE TABLE` statement creates a new table. Each such table is a
 set of _rows_ (usually representing related entities) for which it
@@ -473,7 +476,7 @@ Otherwise, it must be specified by following `PRIMARY KEY` by the
 comma-separated list of column names composing the key within
 parenthesis. Note that:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE t (
 k int PRIMARY KEY,
@@ -483,7 +486,7 @@ other text
 
 is equivalent to
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE t (
 k int,
@@ -518,7 +521,7 @@ Some columns can be declared as `STATIC` in a table definition. A column
 that is static will be ``shared'' by all the rows belonging to the same
 partition (having the same partition key). For instance, in:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE test (
 pk int,
@@ -760,7 +763,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 ALTER TABLE addamsFamily
 
@@ -854,7 +857,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
  DROP TABLE worldSeriesAttendees;
 
 The `DROP TABLE` statement results in the immediate, irreversible
@@ -874,7 +877,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
  TRUNCATE superImportantData;
 
 The `TRUNCATE` statement permanently removes all data from a table.
@@ -901,15 +904,15 @@ ON `(' `)'
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE INDEX userIndex ON NerdMovies (user);
 CREATE INDEX ON Mutants (abilityId);
 CREATE INDEX ON users (keys(favs));
 CREATE INDEX ON users (age) USING 'sai';
-CREATE CUSTOM INDEX ON users (email) USING `path.to.the.IndexClass';
+CREATE CUSTOM INDEX ON users (email) USING 'path.to.the.IndexClass';
 CREATE CUSTOM INDEX ON users (email) USING `path.to.the.IndexClass' WITH
-OPTIONS = \{’storage’: `/mnt/ssd/indexes/'};
+OPTIONS = {’storage’: '/mnt/ssd/indexes/'};
 ----
 
 If data already exists for the column, it will be indexed
@@ -943,11 +946,11 @@ the map values.
 _Syntax:_
 
 [source,bnf]
-' )?
+DROP INDEX ( IF EXISTS )? ('.')?
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DROP INDEX userIndex;
 DROP INDEX userkeyspace.address_index;
@@ -977,14 +980,14 @@ PRIMARY KEY `(' ( `,' )* `)'
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE MATERIALIZED VIEW monkeySpecies_by_population AS
 SELECT *
 FROM monkeySpecies
 WHERE population IS NOT NULL AND species IS NOT NULL
 PRIMARY KEY (population, species)
-WITH comment=`Allow query by population instead of species';
+WITH comment='Allow query by population instead of species';
 ----
 
 The `CREATE MATERIALIZED VIEW` statement creates a new materialized
@@ -1030,8 +1033,8 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
- DROP MATERIALIZED VIEW monkeySpecies_by_population;
+[source,sql]
+DROP MATERIALIZED VIEW monkeySpecies_by_population;
 
 The `DROP MATERIALIZED VIEW` statement is used to drop an existing
 materialized view.
@@ -1057,7 +1060,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TYPE address (
 street_name text,
@@ -1107,7 +1110,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 ALTER TYPE address ADD country text
 ALTER TYPE address RENAME zip TO zipcode AND street_name TO street
@@ -1142,9 +1145,9 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 CREATE TRIGGER myTrigger ON myTable USING
-`org.apache.cassandra.triggers.InvertedIndex';
+'org.apache.cassandra.triggers.InvertedIndex';
 
 The actual logic that makes up the trigger can be written in any Java
 (JVM) language and exists outside the database. You place the trigger
@@ -1164,7 +1167,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 DROP TRIGGER myTrigger ON myTable;
 
 `DROP TRIGGER` statement removes the registration of a trigger created
@@ -1189,7 +1192,7 @@ AS
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 CREATE OR REPLACE FUNCTION somefunction
 ( somearg int, anotherarg text, complexarg frozen, listarg list )
 RETURNS NULL ON NULL INPUT
@@ -1261,7 +1264,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DROP FUNCTION myfunction;
 DROP FUNCTION mykeyspace.afunction;
@@ -1296,13 +1299,13 @@ STYPE
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE AGGREGATE myaggregate ( val text )
 SFUNC myaggregate_state
 STYPE text
 FINALFUNC myaggregate_final
-INITCOND `foo';
+INITCOND 'foo';
 ----
 
 See the section on link:#udas[user-defined aggregates] for a complete
@@ -1369,7 +1372,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DROP AGGREGATE myAggregate;
 DROP AGGREGATE myKeyspace.anAggregate;
@@ -1415,13 +1418,13 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 INSERT INTO NerdMovies (movie, director, main_actor, year)
-VALUES (`Serenity', `Joss Whedon', `Nathan Fillion', 2005)
+VALUES ('Serenity', 'Joss Whedon', 'Nathan Fillion', 2005)
 USING TTL 86400;
 
-INSERT INTO NerdMovies JSON `\{``movie'': ``Serenity'', ``director'':
+INSERT INTO NerdMovies JSON `{``movie'': ``Serenity'', ``director'':
 ``Joss Whedon'', ``year'': 2005}'
 ----
 
@@ -1495,16 +1498,16 @@ WHERE
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 UPDATE NerdMovies USING TTL 400
-SET director = `Joss Whedon',
-main_actor = `Nathan Fillion',
+SET director = 'Joss Whedon',
+main_actor = 'Nathan Fillion',
 year = 2005
-WHERE movie = `Serenity';
+WHERE movie = 'Serenity';
 
 UPDATE UserActions SET total = total + 2 WHERE user =
-B70DE1D0-9908-4AE3-BE34-5573E5B09F14 AND action = `click';
+B70DE1D0-9908-4AE3-BE34-5573E5B09F14 AND action = 'click';
 ----
 
 The `UPDATE` statement writes one or more columns for a given row in a
@@ -1597,10 +1600,10 @@ WHERE
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DELETE FROM NerdMovies USING TIMESTAMP 1240003134 WHERE movie =
-`Serenity';
+'Serenity';
 
 DELETE phone FROM Users WHERE userid IN
 (C73DE1D3-AF08-40F3-B124-3FF3E5109F22,
@@ -1651,14 +1654,14 @@ APPLY BATCH
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 BEGIN BATCH
-INSERT INTO users (userid, password, name) VALUES (`user2', `ch@ngem3b',
-`second user');
-UPDATE users SET password = `ps22dhds' WHERE userid = `user3';
-INSERT INTO users (userid, password) VALUES (`user4', `ch@ngem3c');
-DELETE name FROM users WHERE userid = `user1';
+INSERT INTO users (userid, password, name) VALUES ('user2', 'ch@ngem3b',
+'second user');
+UPDATE users SET password = 'ps22dhds' WHERE userid = 'user3';
+INSERT INTO users (userid, password) VALUES ('user4', 'ch@ngem3c');
+DELETE name FROM users WHERE userid = 'user1';
 APPLY BATCH;
 ----
 
@@ -1767,7 +1770,7 @@ FROM
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 SELECT name, occupation FROM users WHERE userid IN (199, 200, 207);
 
@@ -1777,9 +1780,9 @@ SELECT name AS user_name, occupation AS user_occupation FROM users;
 
 SELECT time, value
 FROM events
-WHERE event_type = `myEvent'
-AND time > `2011-02-03'
-AND time <= `2012-01-01'
+WHERE event_type = 'myEvent'
+AND time > '2011-02-03'
+AND time <= '2012-01-01'
 
 SELECT COUNT (*) FROM users;
 
@@ -1844,7 +1847,7 @@ key, the clustering columns induce an ordering of rows and relations on
 them is restricted to the relations that allow to select a *contiguous*
 (for the ordering) set of rows. For instance, given
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE posts (
 userid text,
@@ -1859,19 +1862,21 @@ PRIMARY KEY (userid, blog_title, posted_at)
 
 The following query is allowed:
 
-[source,bnf]
+[source,sql]
+----
 SELECT entry_title, content FROM posts WHERE userid=`john doe' AND
-blog_title=`John'`s Blog' AND posted_at >= `2012-01-01' AND posted_at <
-`2012-01-31'
+blog_title='John''s Blog' AND posted_at >= '2012-01-01' AND posted_at <
+'2012-01-31'
+----
 
 But the following one is not, as it does not select a contiguous set of
 rows (and we suppose no secondary indexes are set):
 
-[source,bnf]
+[source,sql]
 ----
 // Needs a blog_title to be set to select ranges of posted_at
-SELECT entry_title, content FROM posts WHERE userid=`john doe' AND
-posted_at >= `2012-01-01' AND posted_at < `2012-01-31'
+SELECT entry_title, content FROM posts WHERE userid='john doe' AND
+posted_at >= '2012-01-01' AND posted_at < '2012-01-31'
 ----
 
 When specifying relations, the `TOKEN` function can be used on the
@@ -1883,9 +1888,9 @@ note that ordering partitioners always order token values by bytes (so
 even if the partition key is of type int, `token(-1) > token(0)` in
 particular). Example:
 
-[source,bnf]
-SELECT * FROM posts WHERE token(userid) > token(`tom') AND token(userid)
-< token(`bob')
+[source,sql]
+SELECT * FROM posts WHERE token(userid) > token('tom') AND token(userid)
+< token('bob')
 
 Moreover, the `IN` relation is only allowed on the last column of the
 partition key and on the last column of the full primary key.
@@ -1893,9 +1898,9 @@ partition key and on the last column of the full primary key.
 It is also possible to ``group'' `CLUSTERING COLUMNS` together in a
 relation using the tuple notation. For instance:
 
-[source,bnf]
-SELECT * FROM posts WHERE userid=`john doe' AND (blog_title, posted_at)
-> (`John'`s Blog', `2012-01-01')
+[source,sql]
+SELECT * FROM posts WHERE userid='john doe' AND (blog_title, posted_at)
+> ('John''s Blog', '2012-01-01')
 
 will request all rows that sorts after the one having ``John’s Blog'' as
 `blog_tile` and `2012-01-01' for `posted_at` in the clustering order. In
@@ -1903,16 +1908,16 @@ particular, rows having a `post_at <= '2012-01-01'` will be returned as
 long as their `blog_title > 'John''s Blog'`, which wouldn’t be the case
 for:
 
-[source,bnf]
-SELECT * FROM posts WHERE userid=`john doe' AND blog_title > `John'`s
-Blog' AND posted_at > `2012-01-01'
+[source,sql]
+SELECT * FROM posts WHERE userid='john doe' AND blog_title > `John''s
+Blog' AND posted_at > '2012-01-01'
 
 The tuple notation may also be used for `IN` clauses on
 `CLUSTERING COLUMNS`:
 
-[source,bnf]
-SELECT * FROM posts WHERE userid=`john doe' AND (blog_title, posted_at)
-IN ((`John'`s Blog', `2012-01-01), (’Extreme Chess', `2014-06-01'))
+[source,sql]
+SELECT * FROM posts WHERE userid='john doe' AND (blog_title, posted_at)
+IN (('John''s Blog', '2012-01-01'), ('Extreme Chess', '2014-06-01'))
 
 The `CONTAINS` operator may only be used on collection columns (lists,
 sets, and maps). In the case of maps, `CONTAINS` applies to the map
@@ -1985,7 +1990,7 @@ For instance, considering the following table holding user profiles with
 their year of birth (with a secondary index on it) and country of
 residence:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE users (
 username text PRIMARY KEY,
@@ -2000,7 +2005,7 @@ CREATE INDEX ON users(birth_year);
 
 Then the following queries are valid:
 
-[source,bnf]
+[source,sql]
 ----
 SELECT * FROM users;
 SELECT firstname, lastname FROM users WHERE birth_year = 1981;
@@ -2020,9 +2025,9 @@ data returned can always be controlled by adding a `LIMIT`.
 
 However, the following query will be rejected:
 
-[source,bnf]
+[source,sql]
 SELECT firstname, lastname FROM users WHERE birth_year = 1981 AND
-country = `FR';
+country = 'FR';
 
 because Cassandra cannot guarantee that it won’t have to scan large
 amount of data even if the result to those query is small. Typically, it
@@ -2031,9 +2036,9 @@ handful are actually from France. However, if you ``know what you are
 doing'', you can force the execution of this query by using
 `ALLOW FILTERING` and so the following query is valid:
 
-[source,bnf]
+[source,sql]
 SELECT firstname, lastname FROM users WHERE birth_year = 1981 AND
-country = `FR' ALLOW FILTERING;
+country = 'FR' ALLOW FILTERING;
 
 [[databaseRoles]]
 === Database Roles
@@ -2055,14 +2060,14 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 CREATE ROLE new_role;
-CREATE ROLE alice WITH PASSWORD = `password_a' AND LOGIN = true;
-CREATE ROLE bob WITH PASSWORD = `password_b' AND LOGIN = true AND
+CREATE ROLE alice WITH PASSWORD = 'password_a' AND LOGIN = true;
+CREATE ROLE bob WITH PASSWORD = 'password_b' AND LOGIN = true AND
 SUPERUSER = true;
-CREATE ROLE carlos WITH OPTIONS = \{ `custom_option1' : `option1_value',
-`custom_option2' : 99 };
+CREATE ROLE carlos WITH OPTIONS = { 'custom_option1' : 'option1_value',
+'custom_option2' : 99 };
 ----
 
 By default roles do not possess `LOGIN` privileges or `SUPERUSER`
@@ -2101,7 +2106,7 @@ Attempting to create an existing role results in an invalid query
 condition unless the `IF NOT EXISTS` option is used. If the option is
 used and the role exists, the statement is a no-op.
 
-[source,bnf]
+[source,sql]
 ----
 CREATE ROLE other_role;
 CREATE ROLE IF NOT EXISTS other_role;
@@ -2124,8 +2129,8 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
-ALTER ROLE bob WITH PASSWORD = `PASSWORD_B' AND SUPERUSER = false;
+[source,sql]
+ALTER ROLE bob WITH PASSWORD = 'PASSWORD_B' AND SUPERUSER = false;
 
 If the role does not exist, the statement will return an error, unless `IF EXISTS` is used in which case the operation is a no-op.
 
@@ -2150,7 +2155,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DROP ROLE alice;
 DROP ROLE IF EXISTS bob;
@@ -2175,7 +2180,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 GRANT report_writer TO alice;
 
 This statement grants the `report_writer` role to `alice`. Any
@@ -2183,13 +2188,13 @@ permissions granted to `report_writer` are also acquired by `alice`. +
 Roles are modelled as a directed acyclic graph, so circular grants are
 not permitted. The following examples result in error conditions:
 
-[source,bnf]
+[source,sql]
 ----
 GRANT role_a TO role_b;
 GRANT role_b TO role_a;
 ----
 
-[source,bnf]
+[source,sql]
 ----
 GRANT role_a TO role_b;
 GRANT role_b TO role_c;
@@ -2206,7 +2211,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 REVOKE report_writer FROM alice;
 
 This statement revokes the `report_writer` role from `alice`. Any
@@ -2223,20 +2228,20 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 LIST ROLES;
 
 Return all known roles in the system, this requires `DESCRIBE`
 permission on the database roles resource.
 
-[source,bnf]
-LIST ROLES OF `alice`;
+[source,sql]
+LIST ROLES OF 'alice';
 
 Enumerate all roles granted to `alice`, including those transitively
 aquired.
 
-[source,bnf]
-LIST ROLES OF `bob` NORECURSIVE
+[source,sql]
+LIST ROLES OF 'bob' NORECURSIVE
 
 List all roles directly granted to `bob`.
 
@@ -2259,34 +2264,34 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
-CREATE USER alice WITH PASSWORD `password_a' SUPERUSER;
-CREATE USER bob WITH PASSWORD `password_b' NOSUPERUSER;
+CREATE USER alice WITH PASSWORD 'password_a' SUPERUSER;
+CREATE USER bob WITH PASSWORD 'password_b' NOSUPERUSER;
 ----
 
 `CREATE USER` is equivalent to `CREATE ROLE` where the `LOGIN` option is
 `true`. So, the following pairs of statements are equivalent:
 
-[source,bnf]
+[source,sql]
 ----
-CREATE USER alice WITH PASSWORD `password_a' SUPERUSER;
-CREATE ROLE alice WITH PASSWORD = `password_a' AND LOGIN = true AND
+CREATE USER alice WITH PASSWORD 'password_a' SUPERUSER;
+CREATE ROLE alice WITH PASSWORD = 'password_a' AND LOGIN = true AND
 SUPERUSER = true;
 
-CREATE USER IF NOT EXISTS alice WITH PASSWORD `password_a' SUPERUSER;
-CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = `password_a' AND LOGIN =
+CREATE USER IF NOT EXISTS alice WITH PASSWORD 'password_a' SUPERUSER;
+CREATE ROLE IF NOT EXISTS alice WITH PASSWORD = 'password_a' AND LOGIN =
 true AND SUPERUSER = true;
 
-CREATE USER alice WITH PASSWORD `password_a' NOSUPERUSER;
-CREATE ROLE alice WITH PASSWORD = `password_a' AND LOGIN = true AND
+CREATE USER alice WITH PASSWORD 'password_a' NOSUPERUSER;
+CREATE ROLE alice WITH PASSWORD = 'password_a' AND LOGIN = true AND
 SUPERUSER = false;
 
-CREATE USER alice WITH PASSWORD `password_a' NOSUPERUSER;
-CREATE ROLE alice WITH PASSWORD = `password_a' AND LOGIN = true;
+CREATE USER alice WITH PASSWORD 'password_a' NOSUPERUSER;
+CREATE ROLE alice WITH PASSWORD = 'password_a' AND LOGIN = true;
 
-CREATE USER alice WITH PASSWORD `password_a';
-CREATE ROLE alice WITH PASSWORD = `password_a' AND LOGIN = true;
+CREATE USER alice WITH PASSWORD 'password_a';
+CREATE ROLE alice WITH PASSWORD = 'password_a' AND LOGIN = true;
 ----
 
 [[alterUserStmt]]
@@ -2301,9 +2306,11 @@ _Syntax:_
 ::= SUPERUSER | NOSUPERUSER
 ----
 
-[source,bnf]
+_Sample:_
+
+[source,sql]
 ----
-ALTER USER alice WITH PASSWORD `PASSWORD_A';
+ALTER USER alice WITH PASSWORD 'PASSWORD_A';
 ALTER USER bob SUPERUSER;
 ----
 
@@ -2319,7 +2326,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DROP USER alice;
 DROP USER IF EXISTS bob;
@@ -2335,12 +2342,12 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 LIST USERS;
 
 This statement is equivalent to
 
-[source,bnf]
+[source,sql]
 LIST ROLES;
 
 but only roles with the `LOGIN` privilege are included in the output.
@@ -2358,7 +2365,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ADD IDENTITY 'id1' TO ROLE 'role1';
 
 Only a user with privileges to add roles can add identities
@@ -2372,7 +2379,7 @@ Attempting to add an existing identity results in an invalid query
 condition unless the `IF NOT EXISTS` option is used. If the option is
 used and the identity exists, the statement is a no-op.
 
-[source,bnf]
+[source,sql]
 ADD IDENTITY IF NOT EXISTS 'id1' TO ROLE 'role1';
 
 [[dropIdentityStmt]]
@@ -2385,7 +2392,7 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 DROP IDENTITY 'testIdentity';
 DROP IDENTITY IF EXISTS 'testIdentity';
@@ -2636,26 +2643,26 @@ EXECUTE
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 GRANT SELECT ON ALL KEYSPACES TO data_reader;
 
 This gives any user with the role `data_reader` permission to execute
 `SELECT` statements on any table across all keyspaces
 
-[source,bnf]
+[source,sql]
 GRANT MODIFY ON KEYSPACE keyspace1 TO data_writer;
 
 This give any user with the role `data_writer` permission to perform
 `UPDATE`, `INSERT`, `UPDATE`, `DELETE` and `TRUNCATE` queries on all
 tables in the `keyspace1` keyspace
 
-[source,bnf]
+[source,sql]
 GRANT DROP ON keyspace1.table1 TO schema_owner;
 
 This gives any user with the `schema_owner` role permissions to `DROP`
 `keyspace1.table1`.
 
-[source,bnf]
+[source,sql]
 GRANT EXECUTE ON FUNCTION keyspace1.user_function( int ) TO
 report_writer;
 
@@ -2663,7 +2670,7 @@ This grants any user with the `report_writer` role permission to execute
 `SELECT`, `INSERT` and `UPDATE` queries which use the function
 `keyspace1.user_function( int )`
 
-[source,bnf]
+[source,sql]
 GRANT DESCRIBE ON ALL ROLES TO role_admin;
 
 This grants any user with the `role_admin` role permission to view any
@@ -2709,7 +2716,7 @@ EXECUTE
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 ----
 REVOKE SELECT ON ALL KEYSPACES FROM data_reader;
 REVOKE MODIFY ON KEYSPACE keyspace1 FROM data_writer;
@@ -2743,13 +2750,13 @@ _Syntax:_
 
 _Sample:_
 
-[source,bnf]
+[source,sql]
 LIST ALL PERMISSIONS OF alice;
 
 Show all permissions granted to `alice`, including those acquired
 transitively from any other roles.
 
-[source,bnf]
+[source,sql]
 LIST ALL PERMISSIONS ON keyspace1.table1 OF bob;
 
 Show all permissions on `keyspace1.table1` granted to `bob`, including
@@ -2760,7 +2767,7 @@ permissions higher up the resource hierarchy which can be applied to
 the `NORECURSIVE` switch restricts the results to only those permissions
 which were directly granted to `bob` or one of `bob`’s roles.
 
-[source,bnf]
+[source,sql]
 LIST SELECT PERMISSIONS OF carlos;
 
 Show any permissions granted to `carlos` or any of `carlos`’s roles,
@@ -3007,7 +3014,7 @@ keys and will thus always be returned in that order. To create a column
 of type `map`, use the `map` keyword suffixed with comma-separated key
 and value types, enclosed in angle brackets. For example:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE users (
 id text PRIMARY KEY,
@@ -3021,42 +3028,42 @@ Writing `map` data is accomplished with a JSON-inspired syntax. To write
 a record using `INSERT`, specify the entire map as a JSON-style
 associative array. _Note: This form will always replace the entire map._
 
-[source,bnf]
+[source,sql]
 ----
 // Inserting (or Updating)
 INSERT INTO users (id, given, surname, favs)
-VALUES (`jsmith', `John', `Smith', \{ `fruit' : `apple', `band' :
-`Beatles' })
+VALUES ('jsmith', 'John', 'Smith', { 'fruit' : 'apple', 'band' :
+'Beatles' })
 ----
 
 Adding or updating key-values of a (potentially) existing map can be
 accomplished either by subscripting the map column in an `UPDATE`
 statement or by adding a new map literal:
 
-[source,bnf]
+[source,sql]
 ----
 // Updating (or inserting)
-UPDATE users SET favs[`author'] = `Ed Poe' WHERE id = `jsmith'
-UPDATE users SET favs = favs + \{ `movie' : `Cassablanca' } WHERE id =
-`jsmith'
+UPDATE users SET favs['author'] = 'Ed Poe' WHERE id = 'jsmith'
+UPDATE users SET favs = favs + {'`movie' : 'Cassablanca' } WHERE id =
+'jsmith'
 ----
 
 Note that TTLs are allowed for both `INSERT` and `UPDATE`, but in both
 case the TTL set only apply to the newly inserted/updated _values_. In
 other words,
 
-[source,bnf]
+[source,sql]
 // Updating (or inserting)
-UPDATE users USING TTL 10 SET favs[`color'] = `green' WHERE id =
-`jsmith'
+UPDATE users USING TTL 10 SET favs['color'] = 'green' WHERE id =
+'jsmith'
 
 will only apply the TTL to the `{ 'color' : 'green' }` record, the rest
 of the map remaining unaffected.
 
 Deleting a map record is done with:
 
-[source,bnf]
-DELETE favs[`author'] FROM users WHERE id = `jsmith'
+[source,sql]
+DELETE favs['author'] FROM users WHERE id = 'jsmith'
 
 [[set]]
 ===== Sets
@@ -3066,7 +3073,7 @@ ordered by their values. To create a column of type `set`, use the `set`
 keyword suffixed with the value type enclosed in angle brackets. For
 example:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE images (
 name text PRIMARY KEY,
@@ -3080,17 +3087,17 @@ Writing a `set` is accomplished by comma separating the set values, and
 enclosing them in curly braces. _Note: An `INSERT` will always replace
 the entire set._
 
-[source,bnf]
+[source,sql]
 INSERT INTO images (name, owner, date, tags)
-VALUES (`cat.jpg', `jsmith', `now', \{ `kitten', `cat', `pet' });
+VALUES ('cat.jpg', 'jsmith', 'now', { 'kitten', 'cat', 'pet' });
 
 Adding and removing values of a set can be accomplished with an `UPDATE`
 by adding/removing new set values to an existing `set` column.
 
-[source,bnf]
-UPDATE images SET tags = tags + \{ `cute', `cuddly' } WHERE name =
-`cat.jpg';
-UPDATE images SET tags = tags - \{ `lame' } WHERE name = `cat.jpg';
+[source,sql]
+UPDATE images SET tags = tags + { 'cute', 'cuddly' } WHERE name =
+'cat.jpg';
+UPDATE images SET tags = tags - { 'lame' } WHERE name = 'cat.jpg';
 
 As with link:#map[maps], TTLs if used only apply to the newly
 inserted/updated _values_.
@@ -3103,7 +3110,7 @@ elements are ordered by there position in the list. To create a column
 of type `list`, use the `list` keyword suffixed with the value type
 enclosed in angle brackets. For example:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE plays (
 id text PRIMARY KEY,
@@ -3121,19 +3128,19 @@ Writing `list` data is accomplished with a JSON-style syntax. To write a
 record using `INSERT`, specify the entire list as a JSON array. _Note:
 An `INSERT` will always replace the entire list._
 
-[source,bnf]
+[source,sql]
 INSERT INTO plays (id, game, players, scores)
-VALUES (`123-afde', `quake', 3, [17, 4, 2]);
+VALUES ('123-afde', 'quake', 3, [17, 4, 2]);
 
 Adding (appending or prepending) values to a list can be accomplished by
 adding a new JSON-style array to an existing `list` column.
 
-[source,bnf]
+[source,sql]
 ----
 UPDATE plays SET players = 5, scores = scores + [ 14, 21 ] WHERE id =
-`123-afde';
+'123-afde';
 UPDATE plays SET players = 5, scores = [ 12 ] + scores WHERE id =
-`123-afde';
+'123-afde';
 ----
 
 It should be noted that append and prepend are not idempotent
@@ -3149,14 +3156,14 @@ operations induce an internal read before the update, and will thus
 typically have slower performance characteristics_. Those operations
 have the following syntax:
 
-[source,bnf]
+[source,sql]
 ----
-UPDATE plays SET scores[1] = 7 WHERE id = `123-afde'; // sets the 2nd
+UPDATE plays SET scores[1] = 7 WHERE id = '123-afde'; // sets the 2nd
 element of scores to 7 (raises an error is scores has less than 2
 elements)
-DELETE scores[1] FROM plays WHERE id = `123-afde'; // deletes the 2nd
+DELETE scores[1] FROM plays WHERE id = '123-afde'; // deletes the 2nd
 element of scores (raises an error is scores has less than 2 elements)
-UPDATE plays SET scores = scores - [ 12, 21 ] WHERE id = `123-afde'; // removes all occurrences of 12 and 21 from scores
+UPDATE plays SET scores = scores - [ 12, 21 ] WHERE id = '123-afde'; // removes all occurrences of 12 and 21 from scores
 ----
 
 As with link:#map[maps], TTLs if used only apply to the newly
@@ -3243,7 +3250,7 @@ into its own datatype.
 The conversions rely strictly on Java’s semantics. For example, the
 double value 1 will be converted to the text value `1.0'.
 
-[source,bnf]
+[source,sql]
 SELECT avg(cast(count as double)) FROM myTable
 
 [[tokenFun]]
@@ -3263,7 +3270,7 @@ partition key columns. The return type depend on the partitioner in use:
 For instance, in a cluster using the default Murmur3Partitioner, if a
 table is defined by
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TABLE users (
 userid text PRIMARY KEY,
@@ -3293,7 +3300,7 @@ node, a new unique timeuuid (at the time where the statement using it is
 executed). Note that this method is useful for insertion but is largely
 non-sensical in `WHERE` clauses. For instance, a query of the form
 
-[source,bnf]
+[source,sql]
 SELECT * FROM myTable WHERE t = now()
 
 will never return any result by design, since the value returned by
@@ -3307,9 +3314,9 @@ date string] ) and return a _fake_ `timeuuid` corresponding to the
 _smallest_ (resp. _biggest_) possible `timeuuid` having for timestamp
 `t`. So for instance:
 
-[source,bnf]
-SELECT * FROM myTable WHERE t > max_timeuuid(`2013-01-01 00:05+0000') AND
-t < min_timeuuid(`2013-02-02 10:00+0000')
+[source,sql]
+SELECT * FROM myTable WHERE t > max_timeuuid('2013-01-01 00:05+0000') AND
+t < min_timeuuid('2013-02-02 10:00+0000')
 
 will select all rows where the `timeuuid` column `t` is strictly older
 than `2013-01-01 00:05+0000' but strictly younger than `2013-02-02
@@ -3386,7 +3393,7 @@ several native aggregates, described below:
 The `count` function can be used to count the rows returned by a query.
 Example:
 
-[source,bnf]
+[source,sql]
 ----
 SELECT COUNT (*) FROM plays;
 SELECT COUNT (1) FROM plays;
@@ -3395,7 +3402,7 @@ SELECT COUNT (1) FROM plays;
 It also can be used to count the non null value of a given column.
 Example:
 
-[source,bnf]
+[source,sql]
 SELECT COUNT (scores) FROM plays;
 
 [[maxMinFcts]]
@@ -3404,8 +3411,8 @@ SELECT COUNT (scores) FROM plays;
 The `max` and `min` functions can be used to compute the maximum and the
 minimum value returned by a query for a given column.
 
-[source,bnf]
-SELECT MIN (players), MAX (players) FROM plays WHERE game = `quake';
+[source,sql]
+SELECT MIN (players), MAX (players) FROM plays WHERE game = 'quake';
 
 [[sumFct]]
 ==== Sum
@@ -3413,7 +3420,7 @@ SELECT MIN (players), MAX (players) FROM plays WHERE game = `quake';
 The `sum` function can be used to sum up all the values returned by a
 query for a given column.
 
-[source,bnf]
+[source,sql]
 SELECT SUM (players) FROM plays;
 
 [[avgFct]]
@@ -3422,7 +3429,7 @@ SELECT SUM (players) FROM plays;
 The `avg` function can be used to compute the average of all the values
 returned by a query for a given column.
 
-[source,bnf]
+[source,sql]
 SELECT AVG (players) FROM plays;
 
 [[udfs]]
@@ -3439,7 +3446,7 @@ propagated to all nodes in the cluster.
 UDFs can be _overloaded_ - i.e. multiple UDFs with different argument
 types but the same function name. Example:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE FUNCTION sample ( arg int ) …;
 CREATE FUNCTION sample ( arg text ) …;
@@ -3463,7 +3470,7 @@ placeholders can be used, too.
 Note that you can use the double-quoted string syntax to enclose the UDF
 source code. For example:
 
-[source,bnf]
+[source,sql]
 ----
 CREATE FUNCTION some_function ( arg int )
 RETURNS NULL ON NULL INPUT
@@ -3475,7 +3482,7 @@ SELECT some_function(column) FROM atable …;
 UPDATE atable SET col = some_function(?) …;
 ----
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TYPE custom_type (txt text, i int);
 CREATE FUNCTION fct_using_udt ( udtarg frozen )
@@ -3492,7 +3499,7 @@ The implicitly available `udfContext` field (or binding for script UDFs)
 provides the neccessary functionality to create new UDT and tuple
 values.
 
-[source,bnf]
+[source,sql]
 ----
 CREATE TYPE custom_type (txt text, i int);
 CREATE FUNCTION fct_using_udt ( somearg int )
@@ -3571,7 +3578,7 @@ statement.
 A complete working example for user-defined aggregates (assuming that a
 keyspace has been selected using the link:#useStmt[`USE`] statement):
 
-[source,bnf]
+[source,sql]
 ----
 CREATE OR REPLACE FUNCTION averageState ( state tuple<int,bigint>, val
 int )
@@ -3579,7 +3586,7 @@ CALLED ON NULL INPUT
 RETURNS tuple<int,bigint>
 LANGUAGE java
 AS ’
-if (val != null) \{
+if (val != null) {
 state.setInt(0, state.getInt(0)+1);
 state.setLong(1, state.getLong(1)+val.intValue());
 }
@@ -3655,10 +3662,10 @@ the same table. In particular, case-sensitive column names should be
 surrounded with double quotes. For example, to insert into a table with
 two columns named ``myKey'' and ``value'', you would do the following:
 
-[source,bnf]
-INSERT INTO mytable JSON `\{``\''myKey\``'': 0, ``value'': 0}'
+[source,sql]
+INSERT INTO mytable JSON '{"\"myKey\"": 0, "value": 0}'
 
-Any columns which are ommitted from the `JSON` map will be defaulted to
+Any columns which are omitted from the `JSON` map will be defaulted to
 a `NULL` value (which will result in a tombstone being created).
 
 [[jsonEncoding]]
