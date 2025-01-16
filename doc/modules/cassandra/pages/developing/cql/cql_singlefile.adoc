@@ -148,8 +148,8 @@ and should generally be preferred.
 A comment in CQL is a line beginning by either double dashes (`--`) or
 double slash (`//`).
 
-Multi-line comments are also supported through enclosure within `$$/*$$` and
-`$$*/$$` (but nesting is not supported).
+Multi-line comments are also supported through enclosure within `++/*++` and
+`++*/++` (but nesting is not supported).
 
 [source,sql]
 ----
@@ -245,7 +245,7 @@ code fragments for user-defined functions.
 
 _Sample:_
 
-[source]
+[source,text]
 ----
 'some string value'
 $$A King's ransom$$
@@ -1287,6 +1287,7 @@ if it exists.
 _Syntax:_
 
 [source,bnf]
+----
 ::= CREATE ( OR REPLACE )?
 AGGREGATE ( IF NOT EXISTS )?
 ( `.' )?
