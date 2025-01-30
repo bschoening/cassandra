@@ -362,6 +362,13 @@ the coordinator will use the current time (in microseconds) at the start
 of statement execution as the timestamp. This is usually a suitable
 default.
 
+For example:
+
+[source,cql]
+----
+include::cassandra:example$CQL/update_ttl_map.cql[]
+----
+
 [[delete_statement]]
 == DELETE
 
