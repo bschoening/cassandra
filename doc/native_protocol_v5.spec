@@ -548,8 +548,8 @@ Table of Contents
                 started (See Section 7 for more details).
         0x0010: With serial consistency. If set, <serial_consistency> should be
                 present. <serial_consistency> is the [consistency] level for the
-                serial phase of conditional updates. Consistency can only be
-                either SERIAL or LOCAL_SERIAL and if not present, it defaults to
+                serial phase of conditional updates. Consistency can be
+                either SERIAL or LOCAL_SERIAL, if not present, it defaults to
                 SERIAL. This option will be ignored for anything else other than a
                 conditional update/insert.
         0x0020: With default timestamp. If set, <timestamp> must be present.
@@ -634,8 +634,8 @@ Table of Contents
       flags are, given their mask:
         0x0010: With serial consistency. If set, <serial_consistency> should be
                 present. <serial_consistency> is the [consistency] level for the
-                serial phase of conditional updates. That consistency can only be
-                either SERIAL or LOCAL_SERIAL and if not present, it defaults to
+                serial phase of conditional updates. Consistency can be
+                either SERIAL or LOCAL_SERIAL, if not present, it defaults to
                 SERIAL. This option will be ignored for anything else other than a
                 conditional update/insert.
         0x0020: With default timestamp. If set, <timestamp> should be present.
@@ -677,8 +677,8 @@ Table of Contents
     - <consistency> is the [consistency] level for the operation.
     - <serial_consistency> is only present if the 0x10 flag is set. In that case,
       <serial_consistency> is the [consistency] level for the serial phase of
-      conditional updates. That consistency can only be either SERIAL or
-      LOCAL_SERIAL and if not present will defaults to SERIAL. This option will
+      conditional updates. Consistency can be either SERIAL or
+      LOCAL_SERIAL, if not present, it defaults to SERIAL. This option will
       be ignored for anything else other than a conditional update/insert.
 
   The server will respond with a RESULT message.
@@ -814,7 +814,7 @@ Table of Contents
         - <columns_count> is an [int] representing the number of columns selected
           by the query that produced this result. It defines the number of <col_spec_i>
           elements in and the number of elements for each row in <rows_content>.
-        - <new_metadata_id> is [short bytes] representing the new, changed result_set
+        - <new_metadata_id> is [short bytes] representing the new, changed result set
            metadata. The new metadata ID must also be used in subsequent executions of
            the corresponding prepared statement, if any.
         - <global_table_spec> is present if the Global_tables_spec is set in
