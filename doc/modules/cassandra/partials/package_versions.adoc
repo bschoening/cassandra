@@ -5,4 +5,4 @@ For older releases use:
 * `50x` for C* {50_version} series
 * `41x` for C* {41_version} series
 
-For example, to add the repository for version (51_version} (`51x`):
+For example, to add the repository for version {51_version} (`51x`):
