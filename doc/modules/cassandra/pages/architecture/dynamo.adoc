@@ -40,36 +40,32 @@ in the original Dynamo paper where deterministic versions and vector
 clocks were used to reconcile concurrent updates to a key, Cassandra
 uses a simpler last-write-wins model where every mutation is timestamped
 (including deletes) and then the latest version of data is the "winning"
-value. Formally speaking, Cassandra uses a Last-Write-Wins Element-Set
-conflict-free replicated data type for each CQL row, or
-https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#LWW-Element-Set_(Last-Write-Wins-Element-Set)[LWW-Element-Set
-CRDT], to resolve conflicting mutations on replica sets.
+value.
+In formal terms, Cassandra employs a Last-Write-Wins Element-Set conflict-free replicated data type (https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type#LWW-Element-Set_(Last-Write-Wins-Element-Set)[LWW-Element-Set CRDT]) for each CQL row to resolve conflicting mutations across replica sets.
 
 === Consistent Hashing using a Token Ring
 
-Cassandra partitions data over storage nodes using a special form of
-hashing called
+Cassandra distributes data across storage nodes using a technique known as
 https://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing]. In
-naive data hashing, you typically allocate keys to buckets by taking a
+traditional hashing, keys are assigned to buckets by taking a
 hash of the key modulo the number of buckets. For example, if you want
-to distribute data to 100 nodes using naive hashing you might assign
+to distribute data to 100 nodes using this basic hashing method, you would assign
 every node to a bucket between 0 and 100, hash the input key modulo 100,
-and store the data on the associated bucket. In this naive scheme,
-however, adding a single node might invalidate almost all of the
-mappings.
+and store the data on the associated bucket. However, this basic approach has the
+drawback that adding a single new node can disrupt nearly all existing mappings.
 
-Cassandra instead maps every node to one or more tokens on a continuous
-hash ring, and defines ownership by hashing a key onto the ring and then
-"walking" the ring in one direction, similar to the
-https://pdos.csail.mit.edu/papers/chord:sigcomm01/chord_sigcomm.pdf[Chord]
-algorithm. The main difference of consistent hashing to naive data
-hashing is that when the number of nodes (buckets) to hash into changes,
-consistent hashing only has to move a small fraction of the keys.
+Consistent hashing allows nodes to be added or removed without significantly altering
+the mapping of keys to nodes. In Cassandra, nodes are arranged on a virtual ring, known
+as a hash ring, and ownership is determined by hashing a key  onto the ring and then
+traversing the ring in a clockwise direction. The primary distinction between consistent
+hashing and simple data hashing is that when the number of nodes (or buckets) changes,
+consistent hashing requires only a small portion of the
+keys to be relocated.
 
 For example, if we have an eight node cluster with evenly spaced tokens,
 and a replication factor (RF) of 3, then to find the owning nodes for a
 key we first hash that key to generate a token (which is just the hash
-of the key), and then we "walk" the ring in a clockwise fashion until we
+of the key), and then we "walk" the ring clockwise until we
 encounter three distinct nodes, at which point we have found all the
 replicas of that key. This example of an eight node cluster with
 gRF=3 can be visualized as follows:
@@ -204,7 +200,7 @@ rack-aware behavior has some potentially
 https://issues.apache.org/jira/browse/CASSANDRA-3810[surprising
 implications]. For example, if there are not an even number of nodes in
 each rack, the data load on the smallest rack may be much higher.
-Similarly, if a single node is bootstrapped into a brand new rack, it
+Similarly, if a single node is bootstrapped into a new rack, it
 will be considered a replica for the entire ring. For this reason, many
 operators choose to configure all nodes in a single availability zone or
 similar failure domain as a single "rack".
@@ -227,7 +223,7 @@ distinct nodes have been added to the set of replicas.
 
 ==== Transient Replication
 
-Transient replication is an experimental feature in Cassandra {40_version} not
+Transient replication is an experimental feature in Cassandra 4.0 not
 present in the original Dynamo paper. This feature allows configuration of a
 subset of replicas to replicate only data that hasn't been incrementally
 repaired. This configuration decouples data redundancy from availability.
@@ -247,7 +243,7 @@ data. Configure it by specifying replication factor as
 
 Transiently replicated keyspaces only support tables created with
 `read_repair` set to `NONE`; monotonic reads are not currently
-supported. You also can't use `LWT`, logged batches, or counters in {40_version}.
+supported. You also can't use `LWT`, logged batches, or counters in 4.0.
 You will possibly never be able to use materialized views with
 transiently replicated keyspaces and probably never be able to use
 secondary indices with them.
@@ -278,7 +274,7 @@ row within a CQL partition. Rows are guaranteed to be unique by primary
 key, and each column in a row resolves concurrent mutations according to
 last-write-wins conflict resolution. This means that updates to
 different primary keys within a partition can actually resolve without
-conflict! Furthermore the CQL collection types such as maps and sets use
+conflict! Furthermore, the CQL collection types such as maps and sets use
 this same conflict-free mechanism, meaning that concurrent updates to
 maps and sets are guaranteed to resolve as well.
 
@@ -331,7 +327,7 @@ The following consistency levels are available:
 `QUORUM`::
   A majority (n/2 + 1) of the replicas must respond.
 `ALL`::
-  All of the replicas must respond.
+  All the replicas must respond.
 `LOCAL_QUORUM`::
   A majority of the replicas in the local datacenter (whichever
   datacenter the coordinator is in) must respond.
@@ -361,15 +357,14 @@ specified time window.
 
 It is common to pick read and write consistency levels such that the
 replica sets overlap, resulting in all acknowledged writes being visible
-to subsequent reads. This is typically expressed in the same terms
+to subsequent reads, a concept known as *read-your-writes* consistency. This is typically expressed in the same terms
 Dynamo does, in that `W + R > RF`, where `W` is the write consistency
 level, `R` is the read consistency level, and `RF` is the replication
 factor. For example, if `RF = 3`, a `QUORUM` request will require
-responses from at least `2/3` replicas. If `QUORUM` is used for both
-writes and reads, at least one of the replicas is guaranteed to
-participate in _both_ the write and the read request, which in turn
-guarantees that the quorums will overlap and the write will be visible
-to the read.
+responses from at least `2/3` replicas. When `QUORUM` is used for both
+writes and reads,  it ensures that at least one replica is involved in
+both the write and read requests. This overlap guarantees that the quorums
+intersect, making the write visible to the read.
 
 In a multi-datacenter environment, `LOCAL_QUORUM` can be used to provide
 a weaker but still useful guarantee: reads are guaranteed to see the
@@ -456,9 +451,9 @@ decision is primarily based on received heartbeat state. For example, if
 a node does not see an increasing heartbeat from a node for a certain
 amount of time, the failure detector "convicts" that node, at which
 point Cassandra will stop routing reads to it (writes will typically be
-written to hints). If/when the node starts heartbeating again, Cassandra
-will try to reach out and connect, and if it can open communication
-channels it will mark that node as available.
+written to hints). When the node resumes sending heartbeats again, Cassandra
+will attempt to establish a connection. If it successfully opens communication
+channels, the node will be marked as available.
 
 [NOTE]
 ====

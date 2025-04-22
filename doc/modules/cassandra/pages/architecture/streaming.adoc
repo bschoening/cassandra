@@ -19,12 +19,12 @@ with Netty
 (https://issues.apache.org/jira/browse/CASSANDRA-12229[CASSANDRA-12229]).
 It replaces the single-threaded (or sequential), synchronous, blocking
 model of streaming messages and transfer of files. Netty supports
-non-blocking, asynchronous, multi-threaded streaming with which multiple
-connections are opened simultaneously. Non-blocking implies that threads
-are not blocked as they don’t wait for a response for a sent request. A
-response could be returned in a different thread. With asynchronous,
-connections and threads are decoupled and do not have a 1:1 relation.
-Several more connections than threads may be opened.
+non-blocking, asynchronous, multithreaded streaming with which multiple
+connections are opened simultaneously. Non-blocking means that threads remain
+active and do not pause, as they do not wait for a response after sending a request.
+A response might be returned by a different thread. In an asynchronous setup,
+connections and threads are independent and not directly linked in a 1:1 manner.
+This allows for the possibility of having many more connections open than there are threads.
 
 == Zero Copy Streaming
 
@@ -68,7 +68,7 @@ Zero copy streaming is enabled by setting the following setting in
 stream_entire_sstables: true
 ....
 
-By default zero copy streaming is enabled.
+By default, zero copy streaming is enabled.
 
 === SSTables Eligible for Zero Copy Streaming
 
@@ -88,7 +88,7 @@ network transfer significantly subject to throttling specified by
 Enabling this will reduce the GC pressure on sending and receiving node.
 While this feature tries to keep the disks balanced, it cannot guarantee
 it. This feature will be automatically disabled if internode encryption
-is enabled. Currently this can be used with Leveled Compaction.
+is enabled. Currently, this can be used with Leveled Compaction.
 
 === Configuring for Zero Copy Streaming
 
@@ -161,7 +161,7 @@ Repair with `nodetool repair` involves streaming of repaired SSTables
 and a repair preview has been added to provide an estimate of the amount
 of repair streaming that would need to be performed. Repair preview
 (https://issues.apache.org/jira/browse/CASSANDRA-13257[CASSANDRA-13257])
-is invoke with `nodetool repair --preview` using option:
+is invoked with `nodetool repair --preview` using option:
 
 ....
 -prv, --preview
