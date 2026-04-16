@@ -1,0 +1,67 @@
+[build-system]
+requires = [
+    "setuptools",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cqlshlib"
+#ToDo:
+#dynamic = ["version"]
+[tool.setuptools]
+description = "A Python library for Apache Cassandra's CQL shell (cqlsh)"
+readme = "README.asc"
+requires-python = ">=3.8"
+license = "Apache-2.0"
+authors = [
+    {name = "Apache Cassandra Developers", email = "dev@cassandra.apache.org"}
+]
+keywords = ["cassandra", "cql", "cqlsh"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "cassandra-driver",
+    "wcwidth"
+]
+
+[project.optional-dependencies]
+test = [
+    "ccm",
+    "pytest",
+    "coverage",
+]
+
+[project.urls]
+Homepage = "https://cassandra.apache.org"
+Repository = "https://github.com/apache/cassandra"
+Documentation = "https://cassandra.apache.org/doc/latest/tools/cqlsh.html"
+
+[project.scripts]
+cqlsh = "cqlshlib.__main__:main"
+
+[tool.setuptools]
+# Maps the current directory to find the 'cqlshlib' package
+package-dir = {"" = "."}
+packages = ["cqlshlib"]
+
+#[tool.setuptools.dynamic]
+# If versioning is handled in a separate file like cqlshlib/version.py
+#version = {attr = "cqlshlib.__version__"}
+
+[tool.pytest.ini_options]
+testpaths = ["cqlshlib/test"]
+python_files = ["test_*.py"]
+
